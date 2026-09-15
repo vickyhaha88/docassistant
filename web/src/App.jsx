@@ -66,7 +66,7 @@ function OcrHighlight({ text, query }) {
         const idx = hay.norm.indexOf(loc.needle);
         const start = hay.map[idx];
         const end = hay.map[idx + loc.needle.length - 1] + 1;
-        const context = 140;
+        const context = 150;
         const ctxStart = Math.max(0, start - context);
         const ctxEnd = Math.min(text.length, end + context);
         const before = start > 0 ? "... " : "";

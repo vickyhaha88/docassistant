@@ -55,9 +55,10 @@ body {
 .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .logo-mark {
   width: 28px; height: 28px; border-radius: 8px;
-  background: var(--accent-gradient); color: #0a1620;
+  background: rgba(80,228,250,0.10); border: 1px solid rgba(80,228,250,0.45);
+  color: var(--accent);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 12px;
+  font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
 }
 .header-title { display: flex; align-items: baseline; gap: 8px; }
 .header-title .zh { font-size: 14px; font-weight: 600; }
@@ -118,15 +119,19 @@ body {
   50% { transform: translate(-50%,-50%) scale(1.05); }
 }
 
-/* 中心星 */
+/* 中心星：能量核心质感（径向渐变亮芯 + 双层辉光），与主按钮的平面渐变拉开区分 */
 .flow-center {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
   width: 66px; height: 66px; border-radius: 50%;
-  background: var(--accent-gradient);
-  color: #0a1620; font-size: 11px; font-weight: 600;
+  background: radial-gradient(circle at 35% 30%, #c2f6ff 0%, #50e4fa 42%, #2b8fd8 100%);
+  border: 1px solid rgba(255,255,255,0.32);
+  color: #06222f; font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; letter-spacing: 1px;
-  box-shadow: 0 0 9px rgba(80,228,250,0.2);
+  box-shadow:
+    0 0 14px rgba(80,228,250,0.45),
+    0 0 38px rgba(80,228,250,0.16),
+    inset 0 1px 2px rgba(255,255,255,0.4);
 }
 
 .rotator { position: absolute; top: 50%; left: 50%; width: 0; height: 0; transform-origin: 0 0; transition: transform 0.5s cubic-bezier(.4,0,.2,1); }

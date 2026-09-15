@@ -24,6 +24,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
@@ -171,6 +172,43 @@ def _cache_put(key: str, extracted: Dict[str, Any]) -> None:
         logger.warning("[cache] 写入失败（不影响主流程）：%s", e)
 
 
+def _rebuild_page_text(page) -> str:
+    """单页文本层重建：表格区域按"格子"提取（格内换行→空格），表外区域常规提取。
+
+    背景：extract_text() 按"整页同一水平带"连行——同行并排的多个格子各自换行时，
+    各格的第 1/2 行 Y 坐标分别相同，左右串行成 "SZX (Shenzhen Destination LAX (Los
+    Angeles"，值逐字在原文、整串回溯却匹配不上。find_tables() 用表格边框线（几何
+    对象）切出格子坐标，字按坐标归属各自格子，格内换行拼空格，单元格内容完整。
+
+    纯几何确定性重建，不依赖任何模型——校验信源的独立性不受影响；无边框/无表格
+    的页面自动退回常规提取（find_tables 检不出表格即原样返回）。
+    """
+    tables = page.find_tables()
+    if not tables:
+        return page.extract_text() or ""
+    bboxes = [t.bbox for t in tables]
+
+    def _outside(obj) -> bool:
+        x0, top, x1, bottom = obj["x0"], obj["top"], obj["x1"], obj["bottom"]
+        return not any(x0 >= bx0 - 1 and x1 <= bx1 + 1
+                       and top >= btop - 1 and bottom <= bbot + 1
+                       for bx0, btop, bx1, bbot in bboxes)
+
+    parts = []
+    rest = page.filter(_outside).extract_text() or ""
+    if rest:
+        parts.append(rest)
+    for t in sorted(tables, key=lambda tb: tb.bbox[1]):
+        lines = []
+        for row in t.extract():
+            cells = [re.sub(r"\s+", " ", c or "").strip() for c in row]
+            if any(cells):
+                lines.append(" | ".join(cells))
+        if lines:
+            parts.append("\n".join(lines))
+    return "\n".join(parts)
+
+
 @app.post("/api/upload")
 async def upload_document(
     file: UploadFile = File(...),
@@ -185,15 +223,15 @@ async def upload_document(
     if not file_bytes:
         raise HTTPException(400, "文件为空")
 
-    # 步骤 1：提取文本层（文件名 + PDF 全页文本）：类型路由 + 前端"原文定位" + 原文回溯校验共用。
-    # 只取首页会让第 2 页内容（报价单费用表）永远无法定位/回溯
+    # 步骤 1：提取文本层（文件名 + PDF 全页文本，表格区域格子感知重建）：类型路由 +
+    # 前端"原文定位" + 原文回溯校验共用。只取首页会让第 2 页内容（报价单费用表）永远无法定位/回溯
     ocr_text = file.filename or ""
     if file_bytes[:4] == b"%PDF":
         try:
             import pdfplumber
             with pdfplumber.open(io.BytesIO(file_bytes)) as _pdf:
                 ocr_text += "\n" + "\n".join(
-                    filter(None, (p.extract_text() or "" for p in _pdf.pages)))
+                    filter(None, (_rebuild_page_text(p) for p in _pdf.pages)))
         except Exception:
             pass
 
