@@ -242,9 +242,16 @@ def _attach_confidence(data: Dict[str, Any], prefix: str = "", ocr_text: str = "
 
 
 def _guess_doc_type(text: str) -> str:
-    """根据 OCR 文本猜测单据类型：报价单/托书关键词优先，默认发票"""
+    """根据 OCR 文本猜测单据类型：按关键词命中数打分，命中多的类型赢，默认发票。
+
+    托书标题（如 AIR FREIGHT BOOKING NOTE）里的 "air freight" 是运输方式泛词，
+    不能让它盖过 托书/订舱/booking note 这类专属词——所以比命中数而不是首个命中。
+    同分时 booking 优先：专属词打平说明文本里两边词都有，订舱类单据更可能是托书。
+    """
     t = (text or "").lower()
-    for doc_type in ("quotation", "booking", "invoice"):
-        if any(k in t for k in DOC_TYPES[doc_type]["detect_keywords"]):
-            return doc_type
-    return "invoice"  # 默认
+    best_type, best_hits = "invoice", 0
+    for doc_type in ("booking", "quotation"):
+        hits = sum(1 for k in DOC_TYPES[doc_type]["detect_keywords"] if k in t)
+        if hits > best_hits:
+            best_type, best_hits = doc_type, hits
+    return best_type
