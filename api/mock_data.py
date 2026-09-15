@@ -34,7 +34,7 @@ def _mock_result(doc_type: str, hint_text: str = "", filename: str = "") -> Dict
     """生成带置信度的 mock 抽取结果——根据文件名 variant 返回不同数据"""
     variant = _extract_variant_from_filename(filename)
     if doc_type == "booking":
-        # 托书：vessel_name 中置信 / remarks 低置信，演示人工复核分流
+        # 托书：flight_no 中置信 / remarks 低置信，演示人工复核分流
         return copy.deepcopy(DATA["booking_variants"][0])
     if doc_type == "invoice":
         if _is_domestic_invoice(hint_text):

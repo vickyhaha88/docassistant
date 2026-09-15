@@ -4,14 +4,14 @@ import { api, apiFormData, apiDownload, apiBase } from "./api.js";
 const SAMPLE_FILES = [
   { name: "sample_commercial_invoice.pdf", label: "🧾 供应商商业发票", docType: "invoice", hint: "Commercial Invoice FOB" },
   { name: "sample_quotation.pdf", label: "✈️ 货代报价单", docType: "quotation", hint: "Air Freight Quotation" },
-  { name: "sample_booking.pdf", label: "🚢 海运出口托书", docType: "booking", hint: "Booking Note 2×40HQ" },
+  { name: "sample_booking.pdf", label: "🛫 空运出口托书", docType: "booking", hint: "Air Booking SZX→LAX" },
   { name: "滴滴电子发票.pdf", label: "🧾 国内电子发票", docType: "invoice", hint: "Domestic e-Invoice" },
 ];
 // 三类单据元信息（托书已上线，与后端 DOC_TYPES 对应）
 const DOC_TYPE_META = {
   invoice: { label: "发票 Invoice", icon: "📄" },
   quotation: { label: "报价单 Quotation", icon: "✈️" },
-  booking: { label: "托书 Booking", icon: "📑" },
+  booking: { label: "空运托书 Booking", icon: "📑" },
 };
 const DISABLED_TYPES = new Set(); // 暂无禁用类型
 
@@ -172,15 +172,15 @@ function fieldLabel(key) {
     quote_type: "报价单类型", quote_number: "报价单号", quote_date: "报价日期",
     valid_until: "有效期至", forwarder_name: "货代公司", forwarder_contact: "货代联系人",
     forwarder_phone: "货代电话", forwarder_email: "货代邮箱", client_name: "客户公司",
-    client_contact: "客户联系人", port_of_loading: "起运港", port_of_discharge: "目的港",
+    client_contact: "客户联系人", port_of_loading: "起运机场", port_of_discharge: "目的机场",
     transport_mode: "运输方式", cargo_description: "货物描述", packages: "件数",
     gross_weight: "毛重(kg)", volume: "体积(m³)", chargeable_weight: "计费重(kg)",
     transit_days: "运输时效", remarks: "备注",
     booking_number: "托书号", booking_date: "托书日期",
     shipper_name: "发货人", shipper_address: "发货人地址",
-    vessel_name: "船名", voyage_number: "航次",
-    place_of_delivery: "交货地", etd: "预计开船(ETD)", eta: "预计到港(ETA)",
-    container_type: "箱型", container_count: "箱量", payment_terms: "付款条款",
+    airline: "航空公司", flight_no: "航班号",
+    place_of_delivery: "交货地", etd: "预计起飞(ETD)", eta: "预计到港(ETA)",
+    special_requirements: "特殊要求", payment_terms: "付款条款",
   };
   const simple = key.split(".").pop();
   return map[simple] || simple;
@@ -308,7 +308,7 @@ function computeValidation(doc) {
     return checks;
   }
 
-  // 托书：纯物流单据无金额，确定性交叉校验落在时间勾稽与柜型容量勾稽
+  // 托书：纯物流单据无金额，确定性交叉校验落在时间勾稽与计费重勾稽
   if (doc.doc_type === "booking") {
     const dateOf = (x) => {
       const v = x && typeof x === "object" && "value" in x ? x.value : x;
@@ -318,25 +318,23 @@ function computeValidation(doc) {
     const etd = dateOf(er.etd), eta = dateOf(er.eta);
     if (etd && eta) {
       const ok = etd < eta;
-      checks.push({ pass: ok, msg: ok ? `✓ 开船日早于到港日（${etd} → ${eta}）` : `✗ 开船日 ${etd} 不早于到港日 ${eta}，日期疑似抓错` });
+      checks.push({ pass: ok, msg: ok ? `✓ 起飞日早于到港日（${etd} → ${eta}）` : `✗ 起飞日 ${etd} 不早于到港日 ${eta}，日期疑似抓错` });
     }
-    // 柜型容量勾稽：体积/毛重不得超过 该箱型上限 × 箱量（超了必是箱量或数抓错）
-    const ct = er.container_type && typeof er.container_type === "object" && "value" in er.container_type ? String(er.container_type.value ?? "") : String(er.container_type ?? "");
-    const CAPS = { "20GP": [33, 28], "40GP": [67, 27], "40HQ": [76, 27], "45HQ": [86, 27], "20RF": [31, 27], "40RF": [67, 27] };
-    const cap = Object.entries(CAPS).find(([t]) => ct.toUpperCase().startsWith(t));
-    const count = num(er.container_count);
+    // 计费重勾稽：空运体积比 1:167（IATA 6000cm³/kg），
+    // 计费重 = max(毛重, 体积×167) 向上进位到 0.5kg——对不上必是三数之一抓错
     const vol = num(er.volume);
     const wt = num(er.gross_weight);
-    if (cap && count != null && count > 0) {
-      const [cbmCap, tCap] = cap[1];
-      if (vol != null) {
-        const ok = vol <= cbmCap * count;
-        checks.push({ pass: ok, msg: ok ? `✓ 体积 ${vol} m³ 在 ${count}×${cap[0]} 容量内（上限 ${cbmCap * count} m³）` : `✗ 体积 ${vol} m³ 超出 ${count}×${cap[0]} 容量上限（${cbmCap * count} m³），箱量或体积疑似抓错` });
-      }
-      if (wt != null) {
-        const ok = wt <= tCap * 1000 * count;
-        checks.push({ pass: ok, msg: ok ? `✓ 毛重 ${wt} kg 在 ${count}×${cap[0]} 限重内（上限 ${tCap * count} t）` : `✗ 毛重 ${wt} kg 超出 ${count}×${cap[0]} 限重（${tCap * count} t），疑似抓错` });
-      }
+    const cw = num(er.chargeable_weight);
+    if (vol != null && wt != null && cw != null) {
+      const volWt = vol * 167;
+      const expect = Math.ceil(Math.max(wt, volWt) * 2) / 2; // 向上进位到 0.5kg 档
+      const ok = Math.abs(expect - cw) <= 0.51; // 容忍半档：有的航司不进位直接计
+      checks.push({
+        pass: ok,
+        msg: ok
+          ? `✓ 计费重勾稽一致（max(毛重 ${wt}, 体积 ${vol}×167=${volWt.toFixed(1)}) → 计费重 ${cw} kg）`
+          : `✗ 计费重 ${cw} kg 与验算 ${expect} kg 对不上（max(毛重 ${wt}, 体积 ${vol}×167=${volWt.toFixed(1)})），三数疑似有抓错`,
+      });
     }
     return checks;
   }
@@ -1082,7 +1080,7 @@ function App() {
                 </div>
               </div>
               <p className="hero-title">上传单据，AI 识别图片内容自动转成表格</p>
-              <p className="hero-sub">跨境物流场景专用 · 当前支持三类单据：发票 / 货代报价单 / 海运托书</p>
+              <p className="hero-sub">跨境物流场景专用 · 当前支持三类单据：发票 / 货代报价单 / 空运托书</p>
               <div className="hero-samples">
                 {SAMPLE_FILES.map((s) => (
                   <button key={s.name} className="hero-sample" onClick={() => { if (loading) return; setLanding(false); onPickSampleDirect(s, s.docType); }}>
@@ -1405,7 +1403,7 @@ function App() {
                 className={`tc-btn ${confirmBatchType.guessedType === "booking" ? "active" : ""}`}
                 style={{ flex: 1, padding: "14px 16px" }}
                 onClick={() => runBatchRecognize("booking")}
-              >📑 托书<br /><span style={{ fontSize: 11, color: "var(--text-3)" }}>订舱委托书 / Booking</span></button>
+              >📑 空运托书<br /><span style={{ fontSize: 11, color: "var(--text-3)" }}>空运订舱委托书 / Air Booking</span></button>
             </div>
             <div className="type-confirm-sub">
               所有文件将按统一类型串行识别，每份独立计算置信度

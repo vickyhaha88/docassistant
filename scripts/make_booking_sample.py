@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-"""生成托书演示样本 PDF（samples/sample_booking.pdf）。
+"""生成空运托书演示样本 PDF（samples/sample_booking.pdf）。
 
 设计约束（与确定性交叉校验对齐，数字可被代码勾稽）：
-- ETD(2026-09-20) < ETA(2026-10-18)：时间勾稽可过
-- 2 × 40HQ，体积 68.5 CBM ≤ 76×2，毛重 18600 KGS ≤ 27t×2：柜型容量勾稽可过
-- 件数/毛重/体积为纯数字（单位写在标签里），数值校验可过
-- 无联系人/电话/邮箱/收货人/通知人（敏感信息不进 Schema；收货人属提单补料环节）
+- ETD(2026-09-28) < ETA(2026-09-29)：时间勾稽可过
+- 计费重 802 = max(毛重 760, 体积 4.8×167=801.6) 向上进位到 0.5kg：计费重勾稽可过
+  （空运体积比 1:167，IATA 6000cm³/kg）
+- 件数/毛重/体积/计费重为纯数字（单位写在标签里），数值校验可过
+- 机场字段带 IATA 三字码（SZX / LAX），与报价单样本口径一致，三字码字典校验可过
+- 无联系人/电话/邮箱/收货人/通知人（敏感信息不进 Schema；收货人属运单补料环节）
 - 严格一行一字段（实测两栏同行会让文本层字符按 x 交错，抽取/回溯全毁）
 - 混合字体渲染：拉丁字符用 Helvetica（正常字距），仅中文用 china-s——
   china-s 内置拉丁字形是全角宽字距，整行用它会导致英文"一个字母一个字母隔开"
@@ -30,7 +32,7 @@ F_LATIN = "helv"      # 拉丁：Helvetica，正常比例字距
 F_CJK = "china-s"     # 中文：pymupdf 内置简体
 _LATIN_METRIC = pymupdf.Font(F_LATIN)
 _CJK_METRIC = pymupdf.Font(F_CJK)
-_CJK_RE = re.compile(r"[⺀-鿿豈-﫿＀-￯　-〿]")
+_CJK_RE = re.compile(r"[⺀-鿿豈-﫿＀-￯　-〿]")
 
 
 def _runs(s: str):
@@ -59,31 +61,30 @@ def text(page, x, yy, s, size=11, color=DARK):
     return x
 
 
-# 单据数据（数字之间可勾稽：ETD<ETA；68.5≤76×2；18600≤27000×2）
+# 单据数据（数字之间可勾稽：ETD<ETA；计费重=max(760, 4.8×167)≈802）
 FIELDS = [
     ("header", "SHIPPER", "托运人"),
     ("field", "Name 公司名称", "广州纺织进出口有限公司"),
     ("field", "Address 地址", "广东省广州市海珠区纺织路256号"),
-    ("header", "VESSEL / VOYAGE", "船名航次"),
-    ("field", "Vessel Name 船名", "MSC ANNA"),
-    ("field", "Voyage Number 航次", "V.412W"),
-    ("header", "ROUTING", "运输路线"),
-    ("field", "Port of Loading 起运港", "Guangzhou, China"),
-    ("field", "Port of Discharge 卸货港", "Felixstowe, UK"),
-    ("field", "Place of Delivery 交货地", "London, UK"),
-    ("field", "ETD 预计开船日", "2026-09-20"),
-    ("field", "ETA 预计到港日", "2026-10-18"),
+    ("header", "FLIGHT & ROUTING", "航班路线"),
+    ("field", "Airline 航空公司", "China Southern Airlines 中国南方航空"),
+    ("field", "Flight No. 航班号", "CZ3411"),
+    ("field", "Airport of Departure 起运机场", "SZX (Shenzhen Bao'an Int'l Airport)"),
+    ("field", "Airport of Arrival 目的机场", "LAX (Los Angeles Int'l Airport)"),
+    ("field", "Place of Delivery 交货地", "Los Angeles, CA, USA"),
+    ("field", "ETD 预计起飞日", "2026-09-28"),
+    ("field", "ETA 预计到港日", "2026-09-29"),
     ("header", "CARGO", "货物信息"),
-    ("field", "Container Type 箱型", "40HQ"),
-    ("field", "Container Count 箱量", "2"),
-    ("field", "Cargo Description 货名", "Textile Garments - Apparel"),
-    ("field", "Packages 件数 (CTNS)", "10800"),
-    ("field", "Gross Weight 毛重 (KGS)", "18600"),
-    ("field", "Volume 体积 (CBM)", "68.5"),
+    ("field", "Cargo Description 货名", "涤纶针织上衣 Polyester Knitted Blouses"),
+    ("field", "Packages 件数 (CTNS)", "48"),
+    ("field", "Gross Weight 毛重 (KGS)", "760"),
+    ("field", "Volume 体积 (CBM)", "4.8"),
+    ("field", "Chargeable Weight 计费重 (KGS)", "802"),
     ("header", "TERMS", "条款"),
-    ("field", "Incoterm 贸易术语", "FOB Guangzhou"),
+    ("field", "Incoterm 贸易术语", "FOB Shenzhen"),
     ("field", "Payment Terms 付款条款", "T/T 30 days"),
-    ("field", "Remarks 备注", "SI cut-off 2026-09-15 17:00"),
+    ("field", "Special Requirements 特殊要求", "内置锂电池，随附 UN38.3 测试报告"),
+    ("field", "Remarks 备注", "舱位确认后请邮件回执"),
 ]
 
 
@@ -96,19 +97,19 @@ def build():
 
     # ===== 标题 =====
     y = 72
-    title = "OCEAN FREIGHT BOOKING NOTE"
+    title = "AIR FREIGHT BOOKING NOTE"
     text(page, (W - text_width(title, 17)) / 2, y, title, size=17)
     y += 22
-    sub = "海运出口货物托书（订舱委托书）"
+    sub = "空运出口货物托书（空运订舱委托书）"
     text(page, (W - text_width(sub, 13)) / 2, y, sub, size=13)
     y += 14
     line(y)
 
     # ===== 编号区（一行一字段）=====
     y += 22
-    text(page, M, y, "Booking Number 托书编号: BK-2026-0912-018")
+    text(page, M, y, "Booking Number 托书编号: BK-2026-0925-103")
     y += 16
-    text(page, M, y, "Booking Date 托书日期: 2026-09-12")
+    text(page, M, y, "Booking Date 托书日期: 2026-09-25")
 
     # ===== 字段区（行距收紧，全部落在页脚线之上）=====
     for kind, *vals in FIELDS:
@@ -124,7 +125,7 @@ def build():
 
     # ===== 页脚 =====
     line(H - 60)
-    text(page, M, H - 42, "Generated booking note sample for system demo purposes only.", size=8, color=GRAY)
+    text(page, M, H - 42, "Generated air booking note sample for system demo purposes only.", size=8, color=GRAY)
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     doc.save(OUT)

@@ -107,26 +107,26 @@
   },
   "booking_variants": [
     {
-      "booking_number": "BK-2026-0912-018",
-      "booking_date": "2026-09-12",
+      "booking_number": "BK-2026-0925-103",
+      "booking_date": "2026-09-25",
       "shipper_name": "广州纺织进出口有限公司",
       "shipper_address": "广东省广州市海珠区纺织路256号",
-      "vessel_name": {"value": "MSC ANNA", "confidence": 0.62, "status": "medium"},
-      "voyage_number": "V.412W",
-      "port_of_loading": "Guangzhou, China",
-      "port_of_discharge": "Felixstowe, UK",
-      "place_of_delivery": "London, UK",
-      "etd": "2026-09-20",
-      "eta": "2026-10-18",
-      "container_type": "40HQ",
-      "container_count": 2,
-      "cargo_description": "Textile Garments - Apparel",
-      "packages": 10800,
-      "gross_weight": 18600,
-      "volume": 68.5,
-      "incoterm": "FOB Guangzhou",
+      "airline": "China Southern Airlines 中国南方航空",
+      "flight_no": {"value": "CZ3411", "confidence": 0.62, "status": "medium"},
+      "port_of_loading": "SZX (Shenzhen Bao'an Int'l Airport)",
+      "port_of_discharge": "LAX (Los Angeles Int'l Airport)",
+      "place_of_delivery": "Los Angeles, CA, USA",
+      "etd": "2026-09-28",
+      "eta": "2026-09-29",
+      "cargo_description": "涤纶针织上衣 Polyester Knitted Blouses",
+      "packages": 48,
+      "gross_weight": 760,
+      "volume": 4.8,
+      "chargeable_weight": 802,
+      "special_requirements": "内置锂电池，随附 UN38.3 测试报告",
+      "incoterm": "FOB Shenzhen",
       "payment_terms": "T/T 30 days",
-      "remarks": {"value": "SI cut-off 2026-09-15 17:00", "confidence": 0.55, "status": "low"}
+      "remarks": {"value": "舱位确认后请邮件回执 Space confirmed, reply by email", "confidence": 0.55, "status": "low"}
     }
   ]
 }

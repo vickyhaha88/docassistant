@@ -36,10 +36,10 @@ DOC_TYPES: Dict[str, Dict[str, Any]] = {
     },
     "booking": {
         "schema": _load_schema("booking"),
-        "display_name": "托书 / Booking Note",
-        "label": "托书 Booking",
-        "sheet_title": "托书",
-        "detect_keywords": ["booking note", "托书", "订舱", "letter of instruction", "shipper's letter"],
+        "display_name": "空运托书 / Air Booking Note",
+        "label": "空运托书 Booking",
+        "sheet_title": "空运托书",
+        "detect_keywords": ["booking note", "托书", "订舱", "air booking", "letter of instruction", "shipper's letter"],
     },
 }
 

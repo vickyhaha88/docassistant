@@ -5,6 +5,24 @@ from typing import Any, Dict, Optional
 
 from schemas import DOC_TYPES
 
+# 常用机场 IATA 三字码字典（国内主要口岸 + 跨境空运高频海外机场）：
+# 起运/目的机场字段校验用，字典外高度可疑（模型拼错/抓错字段）
+_IATA_AIRPORTS = {
+    # 国内
+    "SZX", "CAN", "PVG", "SHA", "PEK", "PKX", "CKG", "CTU", "TFU", "HGH", "NGB",
+    "XMN", "TAO", "NKG", "CSX", "WUH", "XIY", "HKG", "MFM", "TPE",
+    # 北美
+    "LAX", "JFK", "ORD", "SFO", "SEA", "DFW", "ATL", "YYZ", "YVR", "MEX",
+    # 欧洲
+    "FRA", "MUC", "LHR", "CDG", "AMS", "MAD", "BCN", "MXP", "BRU", "LUX", "VIE", "WAW", "PRG", "BUD",
+    # 中东/中亚
+    "IST", "DXB", "DOH", "AUH", "RUH", "ALA", "TAS",
+    # 东南亚/南亚
+    "SIN", "BKK", "KUL", "CGK", "MNL", "HAN", "SGN", "RGN", "DEL", "BOM",
+    # 日韩/澳新
+    "NRT", "KIX", "ICN", "PUS", "SYD", "MEL", "BNE", "AKL",
+}
+
 
 def _compute_confidence(field_name: str, value: Any, is_cn_invoice: Optional[bool] = None) -> float:
     """确定性规则校验分（0~1）：由代码对字段值做格式/数值/字典校验得出，非模型自评估。
@@ -34,7 +52,7 @@ def _compute_confidence(field_name: str, value: Any, is_cn_invoice: Optional[boo
 
     # 金额/数字类 —— 可解析即高分，小数位异常降级
     if field_name in ("amount_total", "amount_subtotal", "tax_amount", "gross_weight", "volume",
-                      "chargeable_weight", "unit_price", "amount", "container_count", "packages"):
+                      "chargeable_weight", "unit_price", "amount", "packages"):
         try:
             float(v.replace(",", ""))
             if "." in v and len(v.split(".")[-1]) > 4:
@@ -65,12 +83,14 @@ def _compute_confidence(field_name: str, value: Any, is_cn_invoice: Optional[boo
             return 0.90
         return 0.72  # 格式不对 → 可疑但不是完全错
 
-    # 箱型（字典校验）：标准集装箱箱型集合之外的高度可疑
-    if field_name == "container_type":
-        cu = v.strip().upper()
-        return 0.90 if any(cu.startswith(t) for t in
-                           ("20GP", "40GP", "40HQ", "45HQ", "20RF", "40RF", "45RF",
-                            "20OT", "40OT", "20FR", "40FR")) else 0.72
+    # 机场三字码（IATA 字典校验）：取前三字符比对——值常带全名注释
+    # （"SZX (Shenzhen Bao'an Int'l Airport)"），核心代码恒在前 3 位
+    if field_name in ("port_of_loading", "port_of_discharge"):
+        return 0.90 if v.strip().upper()[:3] in _IATA_AIRPORTS else 0.72
+
+    # 航班号格式：航司二字码 + 3-4 位数字（CZ3411 / CA981 / 5Y782）
+    if field_name == "flight_no":
+        return 0.90 if re.fullmatch(r"[A-Z0-9]{2}\d{3,4}", v.strip().upper()) else 0.72
 
     # 币种（字典校验）
     if field_name == "currency":
@@ -127,7 +147,7 @@ def _compute_confidence(field_name: str, value: Any, is_cn_invoice: Optional[boo
         except Exception:
             return 0.60
 
-    # 运输方式/船舶信息
+    # 运输方式
     if "transport" in field_name or "shipping" in field_name or "freight" in field_name:
         return 0.86
 

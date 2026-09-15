@@ -26,13 +26,13 @@ FIELD_LABELS_ZH = {
     **INVOICE_FIELD_LABELS,
     "quote_type": "报价单类型", "quote_number": "报价单号", "quote_date": "报价日期",
     "valid_until": "有效期至", "forwarder_name": "货代公司", "client_name": "客户公司",
-    "port_of_loading": "起运港", "port_of_discharge": "目的港", "transport_mode": "运输方式",
+    "port_of_loading": "起运机场", "port_of_discharge": "目的机场", "transport_mode": "运输方式",
     "cargo_description": "货物描述", "packages": "件数", "gross_weight": "毛重(kg)",
     "volume": "体积(m³)", "chargeable_weight": "计费重(kg)", "transit_days": "运输时效",
     "booking_number": "托书号", "booking_date": "托书日期", "shipper_name": "发货人",
-    "shipper_address": "发货人地址", "vessel_name": "船名", "voyage_number": "航次",
-    "place_of_delivery": "交货地", "etd": "预计开船(ETD)", "eta": "预计到港(ETA)",
-    "container_type": "箱型", "container_count": "箱量", "payment_terms": "付款条款",
+    "shipper_address": "发货人地址", "airline": "航空公司", "flight_no": "航班号",
+    "place_of_delivery": "交货地", "etd": "预计起飞(ETD)", "eta": "预计到港(ETA)",
+    "special_requirements": "特殊要求", "payment_terms": "付款条款",
     "remarks": "备注",
 }
 
