@@ -23,6 +23,7 @@ function OcrHighlight({ text, query }) {
   if (!text) return null;
   const q = (query || "").trim();
   let matched = false;
+  let segment = false;
   let parts = [<span key="full" style={{ background: "transparent" }}>{text}</span>];
 
   // 归一化口径与后端"原文回溯"一致：去空白/千分位/货币符、大小写不敏感。
@@ -39,15 +40,32 @@ function OcrHighlight({ text, query }) {
     return { norm, map };
   };
 
+  // 三档定位（与后端 confidence.py 的 _trace_locate 同口径）：
+  // 整串 → 去括号注释（"SZX (Shenzhen Bao'an)" 的核心 "SZX"，扛双栏交错排版）→ 分段（各片段全命中）
+  const locate = (hay, raw) => {
+    const n1 = buildNorm(raw).norm;
+    if (n1.length >= 2 && hay.norm.includes(n1)) return { tier: "full", needle: n1 };
+    const n2 = buildNorm(raw.replace(/[（(][^（）()]*[）)]/g, "")).norm;
+    if (n2.length >= 2 && n2 !== n1 && hay.norm.includes(n2)) return { tier: "full", needle: n2 };
+    const toks = raw.split(/[\s,，、/;；()（）[\]]+/).map((t) => buildNorm(t).norm).filter((t) => t.length >= 2);
+    if (toks.length >= 2 && toks.every((t) => hay.norm.includes(t))) {
+      // 分段命中：高亮最长的片段（信息量最大的核心词）
+      const core = toks.reduce((a, b) => (b.length > a.length ? b : a));
+      return { tier: "segment", needle: core };
+    }
+    return null;
+  };
+
   if (q && q.length >= 2) {
     try {
       const hay = buildNorm(text);
-      const needle = buildNorm(q).norm;
-      const idx = needle ? hay.norm.indexOf(needle) : -1;
-      if (idx >= 0) {
+      const loc = locate(hay, q);
+      if (loc) {
         matched = true;
+        segment = loc.tier === "segment";
+        const idx = hay.norm.indexOf(loc.needle);
         const start = hay.map[idx];
-        const end = hay.map[idx + needle.length - 1] + 1;
+        const end = hay.map[idx + loc.needle.length - 1] + 1;
         const context = 140;
         const ctxStart = Math.max(0, start - context);
         const ctxEnd = Math.min(text.length, end + context);
@@ -61,12 +79,14 @@ function OcrHighlight({ text, query }) {
       }
     } catch (e) { /* 忽略 */ }
   }
-  const hintStyle = { fontSize: 11, color: "var(--warn)", marginBottom: 6, lineHeight: 1.5 };
+  const hintStyle = { fontSize: 11, marginBottom: 6, lineHeight: 1.5 };
   return (
     <div className="ocr-text">
       {!q
-        ? <div style={hintStyle}>⚠ 该字段未识别到值——单据可能没有此栏，请对照原图确认后补填</div>
-        : (!matched && <div style={hintStyle}>⚠ 原文未逐字定位到该值（可能是模型概括/格式换算），请对照原图核对</div>)}
+        ? <div style={{ ...hintStyle, color: "var(--warn)" }}>⚠ 该字段未识别到值——单据可能没有此栏，请对照原图确认后补填</div>
+        : segment
+          ? <div style={{ ...hintStyle, color: "var(--ok)" }}>✓ 已分段定位：原文为跨栏/换行排版，整串被打散，但各内容片段均在原文命中（高亮为核心片段）</div>
+          : (!matched && <div style={{ ...hintStyle, color: "var(--warn)" }}>⚠ 原文未逐字定位到该值（可能是模型概括/格式换算），请对照原图核对</div>)}
       {parts}
     </div>
   );

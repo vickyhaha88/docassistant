@@ -140,14 +140,39 @@ def _norm_for_match(s: Any) -> str:
     return re.sub(r"[\s,，%$￥¥]", "", str(s)).upper()
 
 
+def _trace_locate(value: Any, hay: str) -> Optional[str]:
+    """原文回溯三档定位（扛 pdfplumber 双栏交错 / 跨行拼接排版）：
+
+    - "full"：整串归一化后连续命中（模型照抄原文，最强防幻觉信号）
+    - "full"：去括号注释后命中——"SZX (Shenzhen Bao'an)" 的核心 "SZX" 命中。
+      双栏表格（起运港|目的港）常被 pdfplumber 左右逐段交错成
+      "SZX (Shenzhen Destination LAX (Los Angeles"，注释被打散但核心代码完整
+    - "segment"：按标点/空白切 token 后全部命中——内容每个实词都在文本层，
+      足以证明不是编造，只是被跨栏拆散/拼接过，给中置信而非高分
+    - None：定位不到（可能模型概括/编造/格式换算），不加分
+    """
+    s = str(value)
+    needle = _norm_for_match(s)
+    if len(needle) >= 2 and needle in hay:
+        return "full"
+    stripped = _norm_for_match(re.sub(r"[（(][^（）()]*[）)]", "", s))
+    if len(stripped) >= 2 and stripped != needle and stripped in hay:
+        return "full"
+    tokens = [_norm_for_match(t) for t in re.split(r"[\s,，、/;；()（）\[\]]+", s)]
+    tokens = [t for t in tokens if len(t) >= 2]
+    if len(tokens) >= 2 and all(t in hay for t in tokens):
+        return "segment"
+    return None
+
+
 def _attach_confidence(data: Dict[str, Any], prefix: str = "", ocr_text: str = "", doc_type: str = "") -> Dict[str, Any]:
     """递归给字段挂置信度和状态。若字段已带 value+confidence 则保留不重包。
 
     置信度 = 基础规则分 与 原文回溯加分 取大者：
     - 基础规则分：_compute_confidence 的确定性格式/字典/数值校验
-    - 原文回溯（加到 0.92）：字段值能在文档文本层（pdfplumber 提取）中逐字定位，
-      说明是模型照抄原文而非编造——最强的防幻觉确定性信号；
-      定位不到不扣分（扫描件无文本层、日期被模型重排等情况不误伤）。
+    - 原文回溯（_trace_locate 三档）：整串/去注释命中加到 0.92——模型照抄原文，
+      最强的防幻觉确定性信号；分段命中（token 全在原文但整串断裂，跨栏排版所致）
+      加到 0.88 中置信；定位不到不扣分（扫描件无文本层、格式换算等不误伤）。
     """
     hay = _norm_for_match(ocr_text)
 
@@ -164,9 +189,11 @@ def _attach_confidence(data: Dict[str, Any], prefix: str = "", ocr_text: str = "
     def _score(field_name: str, value: Any) -> float:
         conf = _compute_confidence(field_name, value, is_cn_invoice)
         if hay and value not in (None, "", []):
-            needle = _norm_for_match(value)
-            if len(needle) >= 2 and needle in hay:
+            tier = _trace_locate(value, hay)
+            if tier == "full":
                 conf = max(conf, 0.92)
+            elif tier == "segment":
+                conf = max(conf, 0.88)
         return conf
 
     def _wrap(field_name: str, value: Any) -> Dict[str, Any]:
