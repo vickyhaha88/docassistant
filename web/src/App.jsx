@@ -824,6 +824,12 @@ function App() {
   const batchLowCount = batchMode ? docs.reduce((s, d) => s + countLowConf(d.extract_result), 0) : 0;
   const batchOkCount = batchMode ? docs.filter(d => d.status === "ok").length : 0;
 
+  // 疑点复核环节的打钩不看流程进度，看复核结果：字段全部清零（高置信自动预填 或 人工已复核/修正）才打钩；
+  // 只要有"修正→/抽查→"挂着，环节就停在疑点复核（高亮等待），不自动过关
+  const verifyCleared = (f) => f._reviewed || f._userEdited || (f.confidence >= CONF.high && f.value != null && f.value !== "");
+  const verifyDone = !!cur && cur.status === "ok" && flatAll.length > 0 && flatAll.every(verifyCleared);
+  const verifyPending = !!cur && cur.status === "ok" && flatAll.length > 0 && !verifyDone;
+
   // 流程环节点渲染（左栏小环 / 落地页大环共用，落地页经 CSS scale 放大）
   const renderFlowNodes = (radius = 92) => (
     <div className="rotator" style={{ transform: `rotate(${flowRotation}deg)` }}>
@@ -832,8 +838,12 @@ function App() {
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
         const nIdx = stageSeq.indexOf(n.key);
-        const done = cur && currentStageIdx > nIdx;
-        const active = processStage === n.key;
+        // 疑点复核例外：人工复核完才打钩（全字段清零）；没清零时保持高亮"当前环节"，
+        // 复核清零的同一刻 → 复核环节打绿钩、导出环节亮起（阶段推进的实时反馈）
+        const done = n.key === "verify" ? verifyDone : cur && currentStageIdx > nIdx;
+        const active = processStage === n.key
+          || (n.key === "verify" && verifyPending && processStage === "export")
+          || (n.key === "export" && verifyDone && processStage === "export");
         return (
           <div key={n.key}
             className={`flow-node ${done ? "done" : ""} ${active ? "active" : ""}`}
