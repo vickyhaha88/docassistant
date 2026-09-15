@@ -1072,6 +1072,7 @@ function App() {
                 </div>
               </div>
               <p className="hero-title">上传单据，AI 识别图片内容自动转成表格</p>
+              <p className="hero-sub">跨境物流场景专用 · 当前支持三类单据：发票 / 货代报价单 / 海运托书</p>
               <div className="hero-samples">
                 {SAMPLE_FILES.map((s) => (
                   <button key={s.name} className="hero-sample" onClick={() => { if (loading) return; setLanding(false); onPickSampleDirect(s, s.docType); }}>
