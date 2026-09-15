@@ -1,0 +1,33 @@
+# ===== 环境变量（真实 Key 永不入库）=====
+.env
+
+# ===== Python =====
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ===== Node =====
+web/node_modules/
+web/dist/
+
+# ===== 运行时数据（抽取缓存 / 人工修正回补记录）=====
+api/data/
+
+# ===== 系统 =====
+.DS_Store
+Thumbs.db
+
+# ===== 敏感/本地文件：永不入库（含个人简历、面试材料、服务器拓扑）=====
+.claude/
+~$*
+肖文可-*.docx
+面试*.md
+面试*.html
+项目介绍与面试话术.md
+deploy_ecs.py
+decision-log.md
+项目开发手册skill.md
+7d7bac31-*.png
+ScreenShot_*.png
+samples/滴滴电子发票.pdf

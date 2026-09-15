@@ -1,0 +1,132 @@
+{
+  "invoice_domestic": {
+    "invoice_type": "电子发票（增值税普通发票）",
+    "invoice_number": "25370000000009876543",
+    "invoice_date": "2026-09-08",
+    "seller_name": "北京小桔科技有限公司",
+    "seller_tax_id": "91110108MA01BCAB12",
+    "buyer_name": "肖文可",
+    "buyer_tax_id": "",
+    "goods_description": "客运服务*出租车客运服务",
+    "amount_subtotal": 128.30,
+    "tax_rate": "6%",
+    "tax_amount": 7.70,
+    "currency": "CNY",
+    "amount_total": 136.00
+  },
+  "invoice_domestic_low_overrides": {
+    "buyer_name": {"value": "肖可", "confidence": 0.55, "status": "low"},
+    "buyer_tax_id": {"value": "", "confidence": 0.55, "status": "low"},
+    "buyer_address": {"value": "", "confidence": 0.55, "status": "low"}
+  },
+  "invoice_commercial_variants": [
+    {
+      "invoice_type": "Commercial Invoice",
+      "invoice_number": "CI-2026-0908-00347",
+      "invoice_date": "2026-09-08",
+      "seller_name": "宁波永盛制造有限公司",
+      "seller_tax_id": "91330200MA28D4K3X7",
+      "buyer_name": "XYZ Global Trading Inc.",
+      "buyer_tax_id": "987654321098765432",
+      "goods_description": "Solid Wood Dining Furniture Set",
+      "hs_code": "9403.60.9000",
+      "amount_subtotal": 42325.00,
+      "currency": "USD",
+      "incoterm": "FOB Ningbo",
+      "amount_total": 41055.25
+    },
+    {
+      "invoice_type": "Commercial Invoice",
+      "invoice_number": "CI-2026-0910-00351",
+      "invoice_date": "2026-09-10",
+      "seller_name": "深圳创新电子科技有限公司",
+      "seller_tax_id": "91440300MA5BCN2K9L",
+      "buyer_name": "TechCorp Distribution LLC",
+      "buyer_tax_id": null,
+      "goods_description": "Consumer Electronics Accessories",
+      "hs_code": "8517.62.0000",
+      "amount_subtotal": 50500.00,
+      "currency": "USD",
+      "incoterm": "CIF Dallas",
+      "amount_total": 49490.00
+    },
+    {
+      "invoice_type": "Commercial Invoice",
+      "invoice_number": "CI-2026-0912-00355",
+      "invoice_date": "2026-09-12",
+      "seller_name": "广州纺织进出口有限公司",
+      "seller_tax_id": "91440101MA9XY7M43Q",
+      "buyer_name": "Fashion Retail Group Ltd.",
+      "buyer_tax_id": "GB123456789",
+      "goods_description": "Textile Garments - Apparel",
+      "hs_code": "6109.10.0012",
+      "amount_subtotal": 65300.00,
+      "currency": "USD",
+      "incoterm": "FOB Guangzhou",
+      "amount_total": 62688.00
+    }
+  ],
+  "invoice_commercial_low_overrides": [
+    {"buyer_tax_id": {"value": null, "confidence": 0.55, "status": "low"}},
+    {"buyer_tax_id": {"value": null, "confidence": 0.55, "status": "low"},
+     "incoterm": {"value": "CIF", "confidence": 0.60, "status": "low"}},
+    {"incoterm": {"value": "FOB", "confidence": 0.78, "status": "medium"}}
+  ],
+  "quotation_variants": [
+    {
+      "quote_type": "Air Freight Quotation",
+      "quote_number": "AFQ-2026-0910-007",
+      "quote_date": "2026-09-10", "valid_until": "2026-09-24",
+      "forwarder_name": "ABC International Logistics Co., Ltd.",
+      "client_name": "XYZ Global Trading Inc.",
+      "port_of_loading": "SZX (Shenzhen Bao'an)",
+      "port_of_discharge": "LAX (Los Angeles International)",
+      "incoterm": "EXW Shenzhen", "transport_mode": "Air Freight",
+      "cargo_description": "USB-C Charging Cable, 100% Recycled Plastic",
+      "packages": 25, "gross_weight": 350, "volume": 1.8, "chargeable_weight": 350,
+      "transit_days": "5-7 Working Days",
+      "amount_total": 2194.00, "currency": "USD"
+    },
+    {
+      "quote_type": "Sea Freight Quotation",
+      "quote_number": "SFQ-2026-0911-012",
+      "quote_date": "2026-09-11", "valid_until": "2026-10-02",
+      "forwarder_name": "宁波远洋物流有限公司",
+      "client_name": "European Imports GmbH",
+      "port_of_loading": "NGB (Ningbo Beilun)",
+      "port_of_discharge": "Hamburg (DE)",
+      "incoterm": "FOB Ningbo", "transport_mode": "Sea Freight",
+      "cargo_description": "Solar Panels - Photovoltaic Modules",
+      "packages": 42, "gross_weight": 8400, "volume": 68.5, "chargeable_weight": 8400,
+      "transit_days": "28-32 Days",
+      "amount_total": 3850.00, "currency": "USD"
+    }
+  ],
+  "quotation_low_overrides": {
+    "transit_days": {"value": "5~7工作日", "confidence": 0.55, "status": "low"}
+  },
+  "booking_variants": [
+    {
+      "booking_number": "BK-2026-0912-018",
+      "booking_date": "2026-09-12",
+      "shipper_name": "广州纺织进出口有限公司",
+      "shipper_address": "广东省广州市海珠区纺织路256号",
+      "vessel_name": {"value": "MSC ANNA", "confidence": 0.62, "status": "medium"},
+      "voyage_number": "V.412W",
+      "port_of_loading": "Guangzhou, China",
+      "port_of_discharge": "Felixstowe, UK",
+      "place_of_delivery": "London, UK",
+      "etd": "2026-09-20",
+      "eta": "2026-10-18",
+      "container_type": "40HQ",
+      "container_count": 2,
+      "cargo_description": "Textile Garments - Apparel",
+      "packages": 10800,
+      "gross_weight": 18600,
+      "volume": 68.5,
+      "incoterm": "FOB Guangzhou",
+      "payment_terms": "T/T 30 days",
+      "remarks": {"value": "SI cut-off 2026-09-15 17:00", "confidence": 0.55, "status": "low"}
+    }
+  ]
+}

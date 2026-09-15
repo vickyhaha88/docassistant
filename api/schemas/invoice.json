@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "invoice_type": {"type": "string", "description": "Commercial Invoice / 商业发票 / 电子发票 / Tax Invoice"},
+    "invoice_number": {"type": "string"},
+    "invoice_date": {"type": "string", "description": "YYYY-MM-DD"},
+    "seller_name": {"type": "string"},
+    "seller_tax_id": {"type": "string"},
+    "buyer_name": {"type": "string"},
+    "buyer_tax_id": {"type": "string"},
+    "goods_description": {"type": "string", "description": "货物描述：用一句话概括本票货物，不要输出商品明细数组"},
+    "hs_code": {"type": "string"},
+    "amount_subtotal": {"type": "number"},
+    "tax_rate": {"type": "string"},
+    "tax_amount": {"type": "number"},
+    "amount_total": {"type": "number"},
+    "currency": {"type": "string"},
+    "incoterm": {"type": "string"}
+  }
+}

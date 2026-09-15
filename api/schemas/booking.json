@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "booking_number": {"type": "string", "description": "托书号 / Booking No. / S/O No."},
+    "booking_date": {"type": "string", "description": "YYYY-MM-DD"},
+    "shipper_name": {"type": "string", "description": "发货人 / Shipper"},
+    "shipper_address": {"type": "string"},
+    "vessel_name": {"type": "string", "description": "船名 / Vessel"},
+    "voyage_number": {"type": "string", "description": "航次 / Voyage"},
+    "port_of_loading": {"type": "string", "description": "起运港"},
+    "port_of_discharge": {"type": "string", "description": "卸货港"},
+    "place_of_delivery": {"type": "string", "description": "交货地 / Final Destination"},
+    "etd": {"type": "string", "description": "预计开船日 YYYY-MM-DD"},
+    "eta": {"type": "string", "description": "预计到港日 YYYY-MM-DD"},
+    "container_type": {"type": "string", "description": "箱型，如 20GP / 40GP / 40HQ"},
+    "container_count": {"type": "number", "description": "箱量"},
+    "cargo_description": {"type": "string", "description": "货名"},
+    "packages": {"type": "number", "description": "件数"},
+    "gross_weight": {"type": "number", "description": "毛重 kg"},
+    "volume": {"type": "number", "description": "体积 m3"},
+    "incoterm": {"type": "string"},
+    "payment_terms": {"type": "string", "description": "付款条款，如 T/T 30 days"},
+    "remarks": {"type": "string"}
+  }
+}

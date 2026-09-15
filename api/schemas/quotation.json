@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "properties": {
+    "quote_type": {"type": "string", "description": "Air Freight Quotation / Sea Freight Quotation"},
+    "quote_number": {"type": "string"},
+    "quote_date": {"type": "string"},
+    "valid_until": {"type": "string"},
+    "forwarder_name": {"type": "string"},
+    "client_name": {"type": "string"},
+    "port_of_loading": {"type": "string"},
+    "port_of_discharge": {"type": "string"},
+    "incoterm": {"type": "string"},
+    "transport_mode": {"type": "string"},
+    "cargo_description": {"type": "string"},
+    "packages": {"type": "number"},
+    "gross_weight": {"type": "number"},
+    "volume": {"type": "number"},
+    "chargeable_weight": {"type": "number"},
+    "transit_days": {"type": "string"},
+    "amount_total": {"type": "number"},
+    "currency": {"type": "string"},
+    "charge_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {"type": "string"},
+          "unit": {"type": "string"},
+          "rate": {"type": "number"},
+          "quantity": {"type": "number"},
+          "amount": {"type": "number"},
+          "currency": {"type": "string"}
+        }
+      }
+    }
+  }
+}
